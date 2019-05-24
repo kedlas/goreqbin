@@ -3,23 +3,25 @@ package reader
 import (
 	"fmt"
 	"net/http"
+
+	"goreqbin/pkg/servers"
 )
 
 type Formatter interface {
-	Format(s interface{}) string
+	Format(msg servers.Msg) string
 }
 
 type ConsoleFormatter struct {
 	R *http.Request
 }
 
-func (cf *ConsoleFormatter) Format(s interface{}) string {
-	r, ok := s.(*http.Request)
+func (cf *ConsoleFormatter) Format(msg servers.Msg) string {
+	r, ok := msg.Data().(*http.Request)
 	if ok {
 		return cf.formatHttpRequest(r)
 	}
 
-	return "Unknown subject format"
+	return "Unknown message data"
 }
 
 func (cf *ConsoleFormatter) formatHttpRequest(r *http.Request) string {

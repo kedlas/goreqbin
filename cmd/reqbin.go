@@ -26,7 +26,8 @@ func main() {
 	signal.Notify(stop, os.Interrupt)
 
 	// channel where servers pass the received data
-	msgs := make(chan servers.Msg)
+	msgs := make(chan servers.Msg, 1)
+	defer close(msgs)
 
 	// run the messages reader
 	rdr := reader.NewReader(msgs, &reader.ConsoleFormatter{}, log)

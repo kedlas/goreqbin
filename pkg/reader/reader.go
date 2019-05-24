@@ -17,10 +17,9 @@ func NewReader(msgs chan servers.Msg, f Formatter, log *logrus.Logger) *Reader {
 }
 
 func (r *Reader) Read() {
-	select {
-	case msg := <-r.msgs:
-		r.log.Println(r.f.Format(msg))
-	default:
-		r.log.Println("Nothing received")
-	}
+	go func() {
+		for msg := range r.msgs {
+			r.log.Println(r.f.Format(msg))
+		}
+	}()
 }
