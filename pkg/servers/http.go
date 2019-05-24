@@ -2,8 +2,8 @@ package servers
 
 import (
 	"context"
-	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -32,12 +32,23 @@ func (h *HttpServer) Start() {
 	h.srv = &http.Server{Addr: ":8080"}
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		_, err := io.WriteString(w, "ok\n")
-		if err != nil {
-			fmt.Println(err)
+		req := r
+
+		// we must read body before sending response as it get closed then
+		b, err := ioutil.ReadAll(r.Body)
+		if err == nil {
+			ctx := context.WithValue(r.Context(), "body", string(b))
+			req = r.WithContext(ctx)
 		}
 
-		h.msgs <- &Message{t: time.Now().UTC(), data: r}
+		// send response
+		_, err = io.WriteString(w, "ok\n")
+		if err != nil {
+			h.log.Errorln(err)
+		}
+
+		// pass received message to be processed
+		h.msgs <- &Message{t: time.Now().UTC(), data: req}
 	})
 
 	go func() {
