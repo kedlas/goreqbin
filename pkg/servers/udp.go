@@ -10,6 +10,7 @@ import (
 	"goreqbin/pkg/config"
 )
 
+// UDP represents the UDP server
 type UDP struct {
 	cfg  *config.UDP
 	log  *logrus.Logger
@@ -17,10 +18,12 @@ type UDP struct {
 	msgs chan Msg
 }
 
-func NewUDPServer(cfg *config.UDP, log *logrus.Logger, msgs chan Msg) *UDP {
+//NewUDP creates new instance of UDP server
+func NewUDP(cfg *config.UDP, log *logrus.Logger, msgs chan Msg) *UDP {
 	return &UDP{cfg: cfg, log: log, msgs: msgs}
 }
 
+// Start starts the UDP server
 func (u *UDP) Start() {
 	conn, err := net.ListenUDP("udp", &net.UDPAddr{
 		Port: u.cfg.Port,
@@ -48,6 +51,7 @@ func (u *UDP) Start() {
 	}()
 }
 
+// Stop terminates the UDP server
 func (u *UDP) Stop() {
 	if u.conn != nil {
 		err := u.conn.Close()

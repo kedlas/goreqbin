@@ -8,16 +8,19 @@ import (
 	"goreqbin/pkg/servers"
 )
 
+// Formatter interface is responsible for formatting received message
 type Formatter interface {
+	// Format converts given message struct into string
 	Format(msg servers.Msg) string
 }
 
+// ConsoleFormatter is Formatter implementation that prints received message to stdOut
 type ConsoleFormatter struct {
-	R *http.Request
 }
 
 const timeFormat = "2006-01-02 15:04:05"
 
+// Format converts given message struct into string
 func (cf *ConsoleFormatter) Format(msg servers.Msg) string {
 	switch msg.Type() {
 	case servers.HTTPRequest:
@@ -54,7 +57,7 @@ func (cf *ConsoleFormatter) formatHTTP(r *http.Request) string {
 	hLine := fmt.Sprintf("          Headers: %v", hdrs)
 
 	// request body
-	bLine := fmt.Sprintf("          Body: %s", r.Context().Value("body"))
+	bLine := fmt.Sprintf("          Body: %s", r.Context().Value(servers.Body))
 
 	return fmt.Sprintf("%s \n %s \n %s \n\n", rLine, hLine, bLine)
 }

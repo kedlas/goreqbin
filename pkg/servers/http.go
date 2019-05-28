@@ -13,6 +13,7 @@ import (
 	"goreqbin/pkg/config"
 )
 
+// HTTP represents the HTTP server
 type HTTP struct {
 	cfg  *config.HTTP
 	log  *logrus.Logger
@@ -20,10 +21,18 @@ type HTTP struct {
 	msgs chan Msg
 }
 
-func NewHTTPServer(cfg *config.HTTP, log *logrus.Logger, msgs chan Msg) *HTTP {
+type ctxKey string
+
+const (
+	Body ctxKey = "body"
+)
+
+//NewHTTP creates new HTTP server instance
+func NewHTTP(cfg *config.HTTP, log *logrus.Logger, msgs chan Msg) *HTTP {
 	return &HTTP{cfg: cfg, log: log, msgs: msgs}
 }
 
+// Start starts the server
 func (h *HTTP) Start() {
 	h.srv = &http.Server{Addr: fmt.Sprintf(":%d", h.cfg.Port)}
 
@@ -33,7 +42,7 @@ func (h *HTTP) Start() {
 		// we must read body before sending response as it get closed then
 		b, err := ioutil.ReadAll(r.Body)
 		if err == nil {
-			ctx := context.WithValue(r.Context(), "body", string(b))
+			ctx := context.WithValue(r.Context(), Body, string(b))
 			req = r.WithContext(ctx)
 		}
 
@@ -54,6 +63,7 @@ func (h *HTTP) Start() {
 	}()
 }
 
+// Stop terminates the server
 func (h *HTTP) Stop() {
 	if h.srv == nil {
 		return
