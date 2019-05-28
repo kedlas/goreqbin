@@ -2,6 +2,7 @@ package servers
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -12,24 +13,19 @@ import (
 	"goreqbin/pkg/config"
 )
 
-type Server interface {
-	Start()
-	Stop()
-}
-
-type HttpServer struct {
-	cfg  *config.Configuration
+type HTTP struct {
+	cfg  *config.HTTP
 	log  *logrus.Logger
 	srv  *http.Server
 	msgs chan Msg
 }
 
-func NewHttpServer(cfg *config.Configuration, log *logrus.Logger, msgs chan Msg) *HttpServer {
-	return &HttpServer{cfg: cfg, log: log, msgs: msgs}
+func NewHTTPServer(cfg *config.HTTP, log *logrus.Logger, msgs chan Msg) *HTTP {
+	return &HTTP{cfg: cfg, log: log, msgs: msgs}
 }
 
-func (h *HttpServer) Start() {
-	h.srv = &http.Server{Addr: ":8080"}
+func (h *HTTP) Start() {
+	h.srv = &http.Server{Addr: fmt.Sprintf(":%d", h.cfg.Port)}
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		req := r
@@ -44,11 +40,11 @@ func (h *HttpServer) Start() {
 		// send response
 		_, err = io.WriteString(w, "ok\n")
 		if err != nil {
-			h.log.Errorln(err)
+			h.log.Errorln("Unable to send http response", err)
 		}
 
 		// pass received message to be processed
-		h.msgs <- &Message{t: time.Now().UTC(), data: req}
+		h.msgs <- &Message{msgT: HTTPRequest, tim: time.Now().UTC(), data: req}
 	})
 
 	go func() {
@@ -58,7 +54,7 @@ func (h *HttpServer) Start() {
 	}()
 }
 
-func (h *HttpServer) Stop() {
+func (h *HTTP) Stop() {
 	if h.srv == nil {
 		return
 	}

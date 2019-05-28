@@ -16,18 +16,32 @@ type ConsoleFormatter struct {
 	R *http.Request
 }
 
+const timeFormat = "2006-01-02 15:04:05"
+
 func (cf *ConsoleFormatter) Format(msg servers.Msg) string {
-	r, ok := msg.Data().(*http.Request)
-	if ok {
-		return cf.formatHttpRequest(r)
+	switch msg.Type() {
+	case servers.HTTPRequest:
+		r, ok := msg.Data().(*http.Request)
+		if !ok {
+			return fmt.Sprintf("Unable to format HTTP request received at %s", msg.Time().Format(timeFormat))
+		}
+
+		return cf.formatHTTP(r)
+	case servers.UDPRequest:
+		r, ok := msg.Data().(string)
+		if !ok {
+			return fmt.Sprintf("Unable to format UDP request received at %s", msg.Time().Format(timeFormat))
+		}
+
+		return cf.formatUDP(r)
 	}
 
-	return "Unknown message data"
+	return "Unknown message type"
 }
 
-func (cf *ConsoleFormatter) formatHttpRequest(r *http.Request) string {
+func (cf *ConsoleFormatter) formatHTTP(r *http.Request) string {
 	// request basic info
-	rLine := fmt.Sprintf("%-7s %s %s", r.Method, r.URL.Path, r.Proto)
+	rLine := fmt.Sprintf("%-10s %-7s %s", r.Proto, r.Method, r.URL.Path)
 
 	// headers info
 	var hdrs []string
@@ -43,4 +57,8 @@ func (cf *ConsoleFormatter) formatHttpRequest(r *http.Request) string {
 	bLine := fmt.Sprintf("          Body: %s", r.Context().Value("body"))
 
 	return fmt.Sprintf("%s \n %s \n %s \n\n", rLine, hLine, bLine)
+}
+
+func (cf *ConsoleFormatter) formatUDP(r string) string {
+	return fmt.Sprintf("%-17s %s \n\n", "UDP", r)
 }

@@ -3,17 +3,30 @@ package servers
 import "time"
 
 type Msg interface {
-	Timestamp() time.Time
+	Type() MsgType
+	Time() time.Time
 	Data() interface{}
 }
 
+type MsgType int
+
+const (
+	HTTPRequest MsgType = iota
+	UDPRequest
+)
+
 type Message struct {
-	t    time.Time
+	msgT MsgType
+	tim  time.Time
 	data interface{}
 }
 
-func (msg *Message) Timestamp() time.Time {
-	return msg.t
+func (msg *Message) Type() MsgType {
+	return msg.msgT
+}
+
+func (msg *Message) Time() time.Time {
+	return msg.tim
 }
 
 func (msg *Message) Data() interface{} {
